@@ -37,6 +37,11 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
+app.use((error, req, res, next) => {
+  console.error(error);
+  res.status(error.statusCode || 500).json({ error: 'Internal server error' });
+});
+
 const start = async () => {
   await connectDB();
   await seedDepartments();
