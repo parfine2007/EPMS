@@ -10,13 +10,22 @@ export async function api(path, method = 'GET', body) {
   const headers = { 'Content-Type': 'application/json' }
   if (token.get()) headers.Authorization = `Bearer ${token.get()}`
 
-  const res = await fetch(`${API}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  })
+  let res
+  try {
+    res = await fetch(`${API}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  } catch {
+    throw { error: 'Unable to reach the server. Please try again.' }
+  }
 
-  const data = await res.json()
+  const contentType = res.headers.get('content-type') || ''
+  const data = contentType.includes('application/json')
+    ? await res.json()
+    : { error: (await res.text()) || 'The server returned an empty response.' }
+
   if (!res.ok) throw data
   return data
 }
