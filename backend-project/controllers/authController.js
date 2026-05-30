@@ -5,31 +5,35 @@ const User = require('../models/User');
 const register = async (req, res) => {
   try {
     const { fullName, username, password, confirmPassword } = req.body;
+    const cleanFullName = typeof fullName === 'string' ? fullName.trim() : '';
+    const cleanUsername = typeof username === 'string' ? username.trim() : '';
+    const cleanPassword = typeof password === 'string' ? password : '';
+    const cleanConfirmPassword = typeof confirmPassword === 'string' ? confirmPassword : '';
 
-    if (!fullName || !username || !password || !confirmPassword) {
+    if (!cleanFullName || !cleanUsername || !cleanPassword || !cleanConfirmPassword) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    if (username.length < 3) {
+    if (cleanUsername.length < 3) {
       return res.status(400).json({ error: 'Username must be at least 3 characters' });
     }
 
-    if (password.length < 6) {
+    if (cleanPassword.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    if (password !== confirmPassword) {
+    if (cleanPassword !== cleanConfirmPassword) {
       return res.status(400).json({ error: 'Password and confirm password do not match' });
     }
 
-    const exists = await User.findOne({ username: username.trim() });
+    const exists = await User.findOne({ username: cleanUsername });
     if (exists) return res.status(400).json({ error: 'Username already exists' });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(cleanPassword, 10);
 
     await User.create({
-      fullName: fullName.trim(),
-      username: username.trim(),
+      fullName: cleanFullName,
+      username: cleanUsername,
       password: hashedPassword,
       role: 'HR'
     });
@@ -43,15 +47,17 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
+    const cleanUsername = typeof username === 'string' ? username.trim() : '';
+    const cleanPassword = typeof password === 'string' ? password : '';
 
-    if (!username || !password) {
+    if (!cleanUsername || !cleanPassword) {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    const user = await User.findOne({ username: username.trim() });
+    const user = await User.findOne({ username: cleanUsername });
     if (!user) return res.status(404).json({ error: 'Account not found. Please create an account first.' });
 
-    const match = await bcrypt.compare(password, user.password);
+    const match = await bcrypt.compare(cleanPassword, user.password);
     if (!match) return res.status(401).json({ error: 'Invalid password' });
 
     const token = jwt.sign(
@@ -73,21 +79,24 @@ const login = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const { username, newPassword, confirmPassword } = req.body;
+    const cleanUsername = typeof username === 'string' ? username.trim() : '';
+    const cleanPassword = typeof newPassword === 'string' ? newPassword : '';
+    const cleanConfirmPassword = typeof confirmPassword === 'string' ? confirmPassword : '';
 
-    if (!username || !newPassword || !confirmPassword) {
+    if (!cleanUsername || !cleanPassword || !cleanConfirmPassword) {
       return res.status(400).json({ error: 'Username, new password and confirm password are required' });
     }
-    if (newPassword.length < 6) {
+    if (cleanPassword.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
-    if (newPassword !== confirmPassword) {
+    if (cleanPassword !== cleanConfirmPassword) {
       return res.status(400).json({ error: 'Password and confirm password do not match' });
     }
 
-    const user = await User.findOne({ username: String(username).trim() });
+    const user = await User.findOne({ username: cleanUsername });
     if (!user) return res.status(404).json({ error: 'Account not found' });
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password = await bcrypt.hash(cleanPassword, 10);
     await user.save();
 
     res.status(200).json({ message: 'Password reset successful' });
