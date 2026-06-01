@@ -5,11 +5,13 @@ import Layout from '../components/Layout'
 
 export default function LoginPage() {
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
   const submit = async (e) => {
     e.preventDefault()
     setError('')
+    setIsSubmitting(true)
     const body = Object.fromEntries(new FormData(e.target).entries())
     try {
       const data = await api('/auth/login', 'POST', body)
@@ -17,6 +19,8 @@ export default function LoginPage() {
       navigate('/dashboard')
     } catch (err) {
       setError(err?.error || 'Login failed')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -33,7 +37,9 @@ export default function LoginPage() {
             <Link to="/reset-password" className="underline text-slate-700">Reset password</Link>
           </p>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
-          <button className="w-full bg-black text-white rounded py-2">Login</button>
+          <button disabled={isSubmitting} className="w-full bg-black text-white rounded py-2 disabled:opacity-50">
+            {isSubmitting ? 'Signing in...' : 'Login'}
+          </button>
         </form>
 
         <p className="text-sm text-slate-700 mt-4">No account? <Link to="/register" className="text-black underline">Create account</Link></p>

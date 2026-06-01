@@ -5,6 +5,7 @@ import Layout from '../components/Layout'
 
 export default function RegisterPage() {
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
   const submit = async (e) => {
@@ -17,12 +18,15 @@ export default function RegisterPage() {
       return
     }
 
+    setIsSubmitting(true)
     try {
       await api('/auth/register', 'POST', body)
       e.target.reset()
       navigate('/login')
     } catch (err) {
       setError(err?.error || 'Registration failed')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -36,7 +40,9 @@ export default function RegisterPage() {
           <input name="password" type="password" minLength={6} placeholder="Password" className="w-full border rounded px-3 py-2" required />
           <input name="confirmPassword" type="password" minLength={6} placeholder="Confirm Password" className="w-full border rounded px-3 py-2" required />
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
-          <button className="w-full bg-black text-white rounded py-2">Register</button>
+          <button disabled={isSubmitting} className="w-full bg-black text-white rounded py-2 disabled:opacity-50">
+            {isSubmitting ? 'Creating account...' : 'Register'}
+          </button>
         </form>
         <p className="text-sm text-slate-600">Already have account? <Link to="/login" className="text-black underline">Login</Link></p>
       </div>
